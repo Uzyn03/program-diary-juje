@@ -1,0 +1,1041 @@
+strukture project analisis mood diary teks menggunakan algoritma naive bayes saya menggunakan nuxt3, tailwindcss
+
+assets > css
+main.css :
+@import "tailwindcss";
+
+@layer base {
+  body {
+    @apply bg-gray-50;
+  }
+}
+
+@layer components {
+  .mood-card {
+    @apply bg-white rounded-xl shadow-lg p-6 border border-gray-100 transition-all duration-300 hover:shadow-xl;
+  }
+  
+  .btn-primary {
+    @apply bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none;
+  }
+  
+  .mood-indicator {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
+  }
+  
+  .mood-bahagia {
+    @apply bg-green-400 text-gray-800;
+  }
+  
+  .mood-sedih {
+    @apply bg-purple-300 text-gray-800;
+  }
+  
+  .mood-marah {
+    @apply bg-red-500 text-gray-800;
+  }
+}
+
+composables >
+1. useFirestore.js :
+    import {
+  collection,
+  addDoc,
+  query,
+  orderBy,
+  onSnapshot,
+  serverTimestamp,
+  limit,
+} from "firebase/firestore";
+
+export const useFirestore = () => {
+  const { $db } = useNuxtApp();
+
+  // Save mood analysis result to Firestore
+  const saveMoodAnalysis = async (data) => {
+    try {
+      const docRef = await addDoc(collection($db, "mood_history"), {
+        text: data.text,
+        mood: data.mood,
+        confidence: data.confidence,
+        timestamp: serverTimestamp(),
+        suggestions: data.suggestions || null,
+      });
+      return { success: true, id: docRef.id };
+    } catch (error) {
+      console.error("Error saving mood analysis:", error);
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Get mood history from Firestore
+  const getMoodHistory = () => {
+    return new Promise((resolve, reject) => {
+      const q = query(
+        collection($db, "mood_history"),
+        orderBy("timestamp", "desc"),
+        limit(50)
+      );
+
+      const unsubscribe = onSnapshot(
+        q,
+        (querySnapshot) => {
+          const history = [];
+          querySnapshot.forEach((doc) => {
+            history.push({
+              id: doc.id,
+              ...doc.data(),
+            });
+          });
+          resolve({ data: history, unsubscribe });
+        },
+        (error) => {
+          console.error("Error getting mood history:", error);
+          reject(error);
+        }
+      );
+    });
+  };
+
+  return {
+    saveMoodAnalysis,
+    getMoodHistory,
+  };
+};
+
+2. useNaiveBayes.js :
+export const useNaiveBayes = () => {
+  // Training data sederhana untuk mood classification
+  const trainingData = {
+    bahagia: [
+      "senang sekali hari ini",
+      "bahagia banget",
+      "suka dengan kegiatan ini",
+      "gembira rasanya",
+      "lucu banget",
+      "tertawa lepas",
+      "excited banget",
+      "amazing day",
+      "wonderful moment",
+      "love this",
+      "fantastic experience",
+      "great time",
+      "so happy",
+      "cheerful",
+      "delighted",
+      "joyful",
+      "pleased",
+      "grateful",
+      "blessed",
+      "awesome",
+    ],
+    sedih: [
+      "sedih sekali",
+      "kecewa dengan hasil",
+      "menangis terus",
+      "galau banget",
+      "down banget mood",
+      "patah hati",
+      "lonely feeling",
+      "depression hits",
+      "feeling blue",
+      "heartbroken",
+      "disappointed",
+      "melancholy",
+      "sorrowful",
+      "gloomy",
+      "upset",
+      "frustrated",
+      "hopeless",
+      "miserable",
+      "distressed",
+      "devastated",
+      "kesepian",
+      "sepi",
+    ],
+    marah: [
+      "kesal banget",
+      "marah besar",
+      "geram sekali",
+      "annoying banget",
+      "stress level tinggi",
+      "emosi naik",
+      "furious feeling",
+      "irritated so much",
+      "angry mode on",
+      "pissed off",
+      "outraged",
+      "fuming",
+      "livid",
+      "enraged",
+      "irate",
+      "incensed",
+      "heated",
+      "aggravated",
+      "exasperated",
+      "indignant",
+      "stress",
+      "ngentottt",
+      "ngentot",
+      "kanjut",
+      "anjing",
+      "momok"
+    ],
+  };
+
+  // Stopwords bahasa Indonesia dan Inggris
+  const stopwords = new Set([
+    "yang",
+    "dan",
+    "di",
+    "ke",
+    "dari",
+    "untuk",
+    "pada",
+    "dengan",
+    "dalam",
+    "oleh",
+    "adalah",
+    "akan",
+    "telah",
+    "sudah",
+    "ada",
+    "tidak",
+    "atau",
+    "juga",
+    "dapat",
+    "seperti",
+    "karena",
+    "jika",
+    "saya",
+    "aku",
+    "kamu",
+    "dia",
+    "kita",
+    "mereka",
+    "ini",
+    "itu",
+    "the",
+    "is",
+    "at",
+    "which",
+    "on",
+    "and",
+    "a",
+    "to",
+    "as",
+    "are",
+    "was",
+    "were",
+    "been",
+    "be",
+    "have",
+    "has",
+    "had",
+    "do",
+    "does",
+    "did",
+    "will",
+    "would",
+    "should",
+    "could",
+    "can",
+    "may",
+    "might",
+    "must",
+    "shall",
+    "of",
+    "in",
+    "for",
+    "with",
+    "by",
+    "about",
+    "into",
+    "through",
+    "during",
+    "before",
+    "after",
+    "above",
+    "below",
+    "up",
+    "down",
+    "out",
+    "off",
+    "over",
+    "under",
+    "again",
+    "further",
+    "then",
+    "once",
+    "here",
+    "there",
+    "when",
+    "where",
+    "why",
+    "how",
+    "all",
+    "any",
+    "both",
+    "each",
+    "few",
+    "more",
+    "most",
+    "other",
+    "some",
+    "such",
+    "no",
+    "nor",
+    "not",
+    "only",
+    "own",
+    "same",
+    "so",
+    "than",
+    "too",
+    "very",
+    "s",
+    "t",
+    "just",
+    "now",
+  ]);
+
+  // Preprocessing text
+  const preprocessText = (text) => {
+    // Case folding
+    let processed = text.toLowerCase();
+
+    // Remove punctuation and special characters
+    processed = processed.replace(/[^\w\s]/g, " ");
+
+    // Tokenization
+    let tokens = processed.split(/\s+/).filter((token) => token.length > 0);
+
+    // Remove stopwords
+    tokens = tokens.filter((token) => !stopwords.has(token));
+
+    return tokens;
+  };
+
+  // Build vocabulary and calculate probabilities
+  const buildModel = () => {
+    const vocabulary = new Set();
+    const classWordCounts = {};
+    const classTotalCounts = {};
+    const classPriors = {};
+
+    let totalDocuments = 0;
+
+    // Process training data
+    Object.keys(trainingData).forEach((className) => {
+      classWordCounts[className] = {};
+      classTotalCounts[className] = 0;
+
+      trainingData[className].forEach((text) => {
+        const tokens = preprocessText(text);
+        totalDocuments++;
+
+        tokens.forEach((token) => {
+          vocabulary.add(token);
+          classWordCounts[className][token] =
+            (classWordCounts[className][token] || 0) + 1;
+          classTotalCounts[className]++;
+        });
+      });
+
+      // Calculate class priors
+      classPriors[className] = trainingData[className].length / totalDocuments;
+    });
+
+    return {
+      vocabulary: Array.from(vocabulary),
+      classWordCounts,
+      classTotalCounts,
+      classPriors,
+      vocabularySize: vocabulary.size,
+    };
+  };
+
+  // Classify text using Naive Bayes
+  const classifyText = (text) => {
+    const model = buildModel();
+    const tokens = preprocessText(text);
+    const scores = {};
+
+    Object.keys(trainingData).forEach((className) => {
+      // Start with class prior (log probability)
+      let logProbability = Math.log(model.classPriors[className]);
+
+      tokens.forEach((token) => {
+        // Laplace smoothing
+        const tokenCount = model.classWordCounts[className][token] || 0;
+        const probability =
+          (tokenCount + 1) /
+          (model.classTotalCounts[className] + model.vocabularySize);
+        logProbability += Math.log(probability);
+      });
+
+      scores[className] = logProbability;
+    });
+
+    // Find class with highest probability
+    const predictedClass = Object.keys(scores).reduce((a, b) =>
+      scores[a] > scores[b] ? a : b
+    );
+
+    // Convert log probabilities to normalized probabilities
+    const maxScore = Math.max(...Object.values(scores));
+    const expScores = {};
+    Object.keys(scores).forEach((className) => {
+      expScores[className] = Math.exp(scores[className] - maxScore);
+    });
+
+    const sumExpScores = Object.values(expScores).reduce(
+      (sum, score) => sum + score,
+      0
+    );
+    const normalizedScores = {};
+    Object.keys(expScores).forEach((className) => {
+      normalizedScores[className] = expScores[className] / sumExpScores;
+    });
+
+    const confidence = normalizedScores[predictedClass];
+
+    return {
+      mood: predictedClass,
+      confidence: Math.round(confidence * 100),
+      probabilities: normalizedScores,
+    };
+  };
+
+  // Get mood suggestion
+  const getMoodSuggestion = (mood, confidence) => {
+    const suggestions = {
+      bahagia: [
+        "Terus pertahankan mood positif ini! 😊",
+        "Bagikan kebahagiaan ini dengan orang lain!",
+        "Moment bahagia ini layak untuk diingat selamanya!",
+        "Syukuri kebahagiaan yang kamu rasakan hari ini!",
+      ],
+      sedih: [
+        "Tidak apa-apa merasa sedih, ini adalah bagian dari hidup 💙",
+        "Cobalah berbicara dengan teman atau keluarga",
+        "Lakukan aktivitas yang biasanya membuatmu senang",
+        "Ingat bahwa perasaan ini akan berlalu",
+      ],
+      marah: [
+        "Tarik napas dalam-dalam dan tenangkan diri 🧘‍♀️",
+        "Cobalah untuk memahami akar dari kemarahan ini",
+        "Ekspresikan perasaanmu dengan cara yang sehat",
+        "Mungkin perlu waktu untuk merenung sejenak",
+      ],
+    };
+
+    const moodSuggestions = suggestions[mood] || [];
+    return moodSuggestions[Math.floor(Math.random() * moodSuggestions.length)];
+  };
+
+  return {
+    classifyText,
+    getMoodSuggestion,
+    preprocessText,
+  };
+};
+
+pages >
+1. index.vue :
+<template>
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Hero Section -->
+    <div class="text-center mb-12">
+      <h1 class="text-4xl font-bold text-gray-900 mb-4">
+        Analisis Mood Diary
+      </h1>
+      <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+        Tulis diary harianmu dan biarkan AI menganalisis mood-mu secara real-time menggunakan algoritma Naive Bayes
+      </p>
+    </div>
+
+    <!-- Main Form -->
+    <div class="mood-card mb-8">
+      <h2 class="text-2xl font-semibold text-gray-900 mb-6">Tulis Diary Hari Ini</h2>
+      
+      <div class="space-y-4">
+        <div>
+          <label for="diary-text" class="block text-sm font-medium text-gray-700 mb-2">
+            Bagaimana perasaanmu hari ini?
+          </label>
+          <textarea
+            id="diary-text"
+            v-model="diaryText"
+            :disabled="isAnalyzing"
+            placeholder="Tulis tentang hari ini, perasaanmu, atau hal yang terjadi..."
+            rows="8"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none disabled:opacity-50"
+          ></textarea>
+          <div class="mt-2 text-sm text-gray-500">
+            {{ diaryText.length }} karakter
+          </div>
+        </div>
+
+        <button
+          @click="analyzeMood"
+          :disabled="!diaryText.trim() || isAnalyzing"
+          class="btn-primary w-full sm:w-auto"
+        >
+          <span v-if="isAnalyzing" class="flex items-center justify-center">
+            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Menganalisis Mood...
+          </span>
+          <span v-else>🔍 Analisis Mood</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Analysis Result -->
+    <Transition name="fade" appear>
+      <div v-if="analysisResult" class="mood-card">
+        <h3 class="text-xl font-semibold text-gray-900 mb-6">Hasil Analisis Mood</h3>
+        
+        <div class="grid md:grid-cols-2 gap-6">
+          <!-- Main Result -->
+          <div class="space-y-4">
+            <div class="text-center p-6 rounded-xl" :class="getMoodBgClass(analysisResult.mood)">
+              <div class="text-4xl mb-2">{{ getMoodEmoji(analysisResult.mood) }}</div>
+              <div class="text-2xl font-bold text-gray-900 mb-1">
+                {{ getMoodText(analysisResult.mood) }}
+              </div>
+              <div class="text-lg text-gray-600">
+                Confidence: {{ analysisResult.confidence }}%
+              </div>
+            </div>
+            
+            <div class="p-4 bg-gray-50 rounded-lg">
+              <h4 class="font-medium text-gray-900 mb-2">💡 Saran</h4>
+              <p class="text-gray-700">{{ analysisResult.suggestion }}</p>
+            </div>
+          </div>
+
+          <!-- Confidence Breakdown -->
+          <div class="space-y-4">
+            <h4 class="font-medium text-gray-900">Breakdown Analisis</h4>
+            <div class="space-y-3">
+              <div 
+                v-for="(prob, mood) in analysisResult.probabilities" 
+                :key="mood"
+                class="flex items-center justify-between p-3 rounded-lg bg-gray-50"
+              >
+                <div class="flex items-center space-x-2">
+                  <span class="text-lg">{{ getMoodEmoji(mood) }}</span>
+                  <span class="font-medium">{{ getMoodText(mood) }}</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <div class="w-20 bg-gray-200 rounded-full h-2">
+                    <div 
+                      class="h-2 rounded-full transition-all duration-1000"
+                      :class="getMoodProgressClass(mood)"
+                      :style="{ width: (prob * 100) + '%' }"
+                    ></div>
+                  </div>
+                  <span class="text-sm font-medium text-gray-600 w-12">
+                    {{ Math.round(prob * 100) }}%
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Save Status -->
+        <div v-if="saveStatus" class="mt-4 p-3 rounded-lg" :class="saveStatus.success ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'">
+          {{ saveStatus.message }}
+        </div>
+      </div>
+    </Transition>
+  </div>
+</template>
+
+<script setup>
+import { ref, reactive } from 'vue'
+
+// SEO
+useHead({
+  title: 'Mood Diary - Analisis Mood dengan AI',
+  meta: [
+    { name: 'description', content: 'Aplikasi diary digital dengan analisis mood menggunakan algoritma Naive Bayes' }
+  ]
+})
+
+// Composables
+const { classifyText, getMoodSuggestion } = useNaiveBayes()
+const { saveMoodAnalysis } = useFirestore()
+
+// State
+const diaryText = ref('')
+const isAnalyzing = ref(false)
+const analysisResult = ref(null)
+const saveStatus = ref(null)
+
+// Methods
+const analyzeMood = async () => {
+  if (!diaryText.value.trim()) return
+  
+  isAnalyzing.value = true
+  saveStatus.value = null
+  
+  try {
+    // Simulate processing delay for better UX
+    await new Promise(resolve => setTimeout(resolve, 1500))
+    
+    // Analyze mood
+    const result = classifyText(diaryText.value)
+    const suggestion = getMoodSuggestion(result.mood, result.confidence)
+    
+    analysisResult.value = {
+      ...result,
+      suggestion,
+      text: diaryText.value
+    }
+    
+    // Save to Firestore
+    const saveResult = await saveMoodAnalysis({
+      text: diaryText.value,
+      mood: result.mood,
+      confidence: result.confidence,
+      suggestions: suggestion
+    })
+    
+    if (saveResult.success) {
+      saveStatus.value = {
+        success: true,
+        message: '✅ Hasil analisis berhasil disimpan ke riwayat!'
+      }
+    } else {
+      saveStatus.value = {
+        success: false,
+        message: '⚠️ Analisis berhasil, tapi gagal menyimpan ke riwayat.'
+      }
+    }
+    
+  } catch (error) {
+    console.error('Error analyzing mood:', error)
+    saveStatus.value = {
+      success: false,
+      message: '❌ Terjadi kesalahan saat menganalisis mood.'
+    }
+  } finally {
+    isAnalyzing.value = false
+  }
+}
+
+// Helper methods
+const getMoodEmoji = (mood) => {
+  const emojis = {
+    bahagia: '😊',
+    sedih: '😢',
+    marah: '😠'
+  }
+  return emojis[mood] || '😐'
+}
+
+const getMoodText = (mood) => {
+  const texts = {
+    bahagia: 'Bahagia',
+    sedih: 'Sedih',
+    marah: 'Marah'
+  }
+  return texts[mood] || 'Netral'
+}
+
+const getMoodBgClass = (mood) => {
+  const classes = {
+    bahagia: 'bg-bahagia-100 border-bahagia-200 border',
+    sedih: 'bg-sedih-100 border-sedih-200 border',
+    marah: 'bg-marah-100 border-marah-200 border'
+  }
+  return classes[mood] || 'bg-gray-100'
+}
+
+const getMoodProgressClass = (mood) => {
+  const classes = {
+    bahagia: 'bg-bahagia-500',
+    sedih: 'bg-sedih-500',
+    marah: 'bg-marah-500'
+  }
+  return classes[mood] || 'bg-gray-500'
+}
+</script>
+
+<style scoped>
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.5s ease;
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
+}
+</style>
+
+2. riwayat.vue : 
+<template>
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-gray-900 mb-2">Riwayat Mood</h1>
+      <p class="text-gray-600">Lihat perjalanan mood harianmu</p>
+    </div>
+
+    <!-- Stats Cards -->
+    <div v-if="moodStats" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+      <div class="mood-card text-center">
+        <div class="text-2xl font-bold text-gray-900">{{ moodHistory.length }}</div>
+        <div class="text-sm text-gray-600">Total Entri</div>
+      </div>
+      <div class="mood-card text-center">
+        <div class="text-2xl">😊</div>
+        <div class="text-lg font-semibold text-bahagia-600">{{ moodStats.bahagia }}</div>
+        <div class="text-sm text-gray-600">Bahagia</div>
+      </div>
+      <div class="mood-card text-center">
+        <div class="text-2xl">😢</div>
+        <div class="text-lg font-semibold text-sedih-600">{{ moodStats.sedih }}</div>
+        <div class="text-sm text-gray-600">Sedih</div>
+      </div>
+      <div class="mood-card text-center">
+        <div class="text-2xl">😠</div>
+        <div class="text-lg font-semibold text-marah-600">{{ moodStats.marah }}</div>
+        <div class="text-sm text-gray-600">Marah</div>
+      </div>
+    </div>
+
+    <!-- Filter -->
+    <div class="mood-card mb-8">
+      <div class="flex flex-wrap items-center gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Filter Mood:</label>
+          <select 
+            v-model="filterMood" 
+            class="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="">Semua</option>
+            <option value="bahagia">😊 Bahagia</option>
+            <option value="sedih">😢 Sedih</option>
+            <option value="marah">😠 Marah</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Urutkan:</label>
+          <select 
+            v-model="sortOrder" 
+            class="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="newest">Terbaru</option>
+            <option value="oldest">Terlama</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div v-if="isLoading" class="mood-card text-center py-8">
+      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+      <p class="text-gray-600">Memuat riwayat mood...</p>
+    </div>
+
+    <!-- Empty State -->
+    <div v-else-if="filteredHistory.length === 0" class="mood-card text-center py-12">
+      <div class="text-6xl mb-4">📝</div>
+      <h3 class="text-xl font-semibold text-gray-900 mb-2">Belum Ada Riwayat</h3>
+      <p class="text-gray-600 mb-6">Mulai tulis diary pertamamu untuk melihat analisis mood di sini!</p>
+      <NuxtLink to="/" class="btn-primary">
+        Tulis Diary Sekarang
+      </NuxtLink>
+    </div>
+
+    <!-- History List -->
+    <div v-else class="space-y-6">
+      <TransitionGroup name="history" tag="div" class="space-y-6">
+        <article 
+          v-for="entry in filteredHistory" 
+          :key="entry.id"
+          class="mood-card hover:shadow-xl transition-all duration-300"
+        >
+          <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div class="flex-1">
+              <!-- Mood and Timestamp -->
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center space-x-2">
+                  <span 
+                    class="mood-indicator"
+                    :class="getMoodClass(entry.mood)"
+                  >
+                    {{ getMoodEmoji(entry.mood) }}
+                    {{ getMoodText(entry.mood) }}
+                  </span>
+                  <span class="text-sm text-gray-500">
+                    {{ entry.confidence }}% confidence
+                  </span>
+                </div>
+                <time class="text-sm text-gray-500">
+                  {{ formatDate(entry.timestamp) }}
+                </time>
+              </div>
+              
+              <!-- Diary Text -->
+              <div class="mb-4">
+                <p class="text-gray-800 leading-relaxed">
+                  {{ entry.text }}
+                </p>
+              </div>
+              
+              <!-- Suggestion -->
+              <div v-if="entry.suggestions" class="p-3 bg-gray-50 rounded-lg">
+                <p class="text-sm text-gray-700">
+                  <span class="font-medium">💡 Saran: </span>
+                  {{ entry.suggestions }}
+                </p>
+              </div>
+            </div>
+          </div>
+        </article>
+      </TransitionGroup>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+
+// SEO
+useHead({
+  title: 'Riwayat Mood - Mood Diary',
+  meta: [
+    { name: 'description', content: 'Lihat riwayat analisis mood dari diary harianmu' }
+  ]
+})
+
+// Composables
+const { getMoodHistory } = useFirestore()
+
+// State
+const moodHistory = ref([])
+const isLoading = ref(true)
+const filterMood = ref('')
+const sortOrder = ref('newest')
+let unsubscribeFirestore = null
+
+// Computed
+const filteredHistory = computed(() => {
+  let filtered = moodHistory.value
+
+  // Filter by mood
+  if (filterMood.value) {
+    filtered = filtered.filter(entry => entry.mood === filterMood.value)
+  }
+
+  // Sort
+  filtered.sort((a, b) => {
+    const dateA = a.timestamp?.toDate() || new Date(0)
+    const dateB = b.timestamp?.toDate() || new Date(0)
+    
+    return sortOrder.value === 'newest' 
+      ? dateB.getTime() - dateA.getTime()
+      : dateA.getTime() - dateB.getTime()
+  })
+
+  return filtered
+})
+
+const moodStats = computed(() => {
+  if (moodHistory.value.length === 0) return null
+  
+  const stats = {
+    bahagia: 0,
+    sedih: 0,
+    marah: 0
+  }
+  
+  moodHistory.value.forEach(entry => {
+    if (stats.hasOwnProperty(entry.mood)) {
+      stats[entry.mood]++
+    }
+  })
+  
+  return stats
+})
+
+// Methods
+const loadMoodHistory = async () => {
+  try {
+    isLoading.value = true
+    const result = await getMoodHistory()
+    moodHistory.value = result.data
+    unsubscribeFirestore = result.unsubscribe
+  } catch (error) {
+    console.error('Error loading mood history:', error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const formatDate = (timestamp) => {
+  if (!timestamp) return 'Tanggal tidak diketahui'
+  
+  const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp)
+  const now = new Date()
+  const diffTime = now.getTime() - date.getTime()
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+  
+  if (diffDays === 0) {
+    return 'Hari ini, ' + date.toLocaleTimeString('id-ID', { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    })
+  } else if (diffDays === 1) {
+    return 'Kemarin, ' + date.toLocaleTimeString('id-ID', { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    })
+  } else if (diffDays < 7) {
+    return `${diffDays} hari lalu`
+  } else {
+    return date.toLocaleDateString('id-ID', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
+}
+
+const getMoodEmoji = (mood) => {
+  const emojis = {
+    bahagia: '😊',
+    sedih: '😢',
+    marah: '😠'
+  }
+  return emojis[mood] || '😐'
+}
+
+const getMoodText = (mood) => {
+  const texts = {
+    bahagia: 'Bahagia',
+    sedih: 'Sedih',
+    marah: 'Marah'
+  }
+  return texts[mood] || 'Netral'
+}
+
+const getMoodClass = (mood) => {
+  return `mood-${mood}`
+}
+
+// Lifecycle
+onMounted(() => {
+  loadMoodHistory()
+})
+
+onUnmounted(() => {
+  if (unsubscribeFirestore) {
+    unsubscribeFirestore()
+  }
+})
+</script>
+
+<style scoped>
+.history-enter-active,
+.history-leave-active {
+  transition: all 0.5s ease;
+}
+
+.history-enter-from {
+  opacity: 0;
+  transform: translateX(-30px);
+}
+
+.history-leave-to {
+  opacity: 0;
+  transform: translateX(30px);
+}
+
+.history-move {
+  transition: transform 0.5s ease;
+}
+</style>
+
+plugins >
+firebase.client.js :
+import { initializeApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
+
+// Firebase configuration
+const firebaseConfig = {
+  // Ganti dengan konfigurasi Firebase Anda
+  apiKey: "AIzaSyB28RTJRmXKLl6LQcj3oC5pbga09s81blI",
+  authDomain: "program-juje.firebaseapp.com",
+  projectId: "program-juje",
+  storageBucket: "program-juje.firebasestorage.app",
+  messagingSenderId: "279811055003",
+  appId: "1:279811055003:web:a952533a71903fe2f1d53e",
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+export default defineNuxtPlugin(() => {
+  return {
+    provide: {
+      firebase: app,
+      db: db,
+    },
+  };
+});
+
+app.vue :
+<template>
+  <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <nav class="bg-white/80 backdrop-blur-lg border-b border-gray-200 sticky top-0 z-50">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          <NuxtLink to="/" class="flex items-center space-x-3">
+            <div class="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+              <span class="text-white font-bold text-sm">📝</span>
+            </div>
+            <h1 class="text-xl font-bold text-gray-900">Mood Diary</h1>
+          </NuxtLink>
+          
+          <div class="flex items-center space-x-4">
+            <NuxtLink 
+              to="/" 
+              class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+            >
+              Beranda
+            </NuxtLink>
+            <NuxtLink 
+              to="/riwayat" 
+              class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+            >
+              Riwayat
+            </NuxtLink>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main>
+      <NuxtPage />
+    </main>
+
+    <footer class="bg-white border-t border-gray-200 mt-16">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="text-center text-gray-600">
+          <p>&copy; 2025 Mood Diary. Analisis mood menggunakan Naive Bayes Algorithm.</p>
+        </div>
+      </div>
+    </footer>
+  </div>
+</template>
+

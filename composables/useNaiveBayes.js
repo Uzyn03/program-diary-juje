@@ -1,12 +1,11 @@
 export const useNaiveBayes = () => {
-  // Training data sederhana untuk mood classification
+  // Training data yang lebih seimbang dan representatif
   const trainingData = {
     bahagia: [
       "senang sekali hari ini",
       "bahagia banget",
       "suka dengan kegiatan ini",
       "gembira rasanya",
-      "lucu banget",
       "tertawa lepas",
       "excited banget",
       "amazing day",
@@ -15,14 +14,82 @@ export const useNaiveBayes = () => {
       "fantastic experience",
       "great time",
       "so happy",
-      "cheerful",
-      "delighted",
-      "joyful",
-      "pleased",
-      "grateful",
-      "blessed",
-      "awesome",
+      "luar biasa hari ini",
+      "sempurna banget",
+      "indah sekali",
+      "menyenangkan",
+      "menggembirakan",
+      "fantastis",
+      "hebat",
+      "menakjubkan",
+      "beruntung",
+      "syukur",
+      "puas",
+      "bangga",
+      "optimis",
+      "ceria",
+      "antusias",
+      "semangat",
+      "energik",
+      "positif",
+      "cerah",
+      "fresh",
+      "rileks",
+      "tenang",
+      "damai",
+      "sukses",
+      "berhasil",
+      "menang",
+      "prestasi",
+      "keren abis",
+      "mantap jiwa",
+      "asik poll",
+      "seru abis",
+      "happy banget",
+      "seneng poll",
+      "mantul",
+      "jos gandos",
+      "terbaik",
+      "juara banget",
+      "dahsyat",
+      "mengagumkan",
+      "memukau",
+      "menghibur",
+      "menyegarkan",
+      "memuaskan",
+      "lega rasanya",
+      "nikmat sekali",
+      "enak banget",
+      "adem ayem",
+      "berkah",
+      "untung besar",
+      "victory",
+      "celebration",
+      "fun",
+      "enjoy",
+      "smile",
+      "laugh",
+      "bright",
+      "beautiful",
+      "excellent",
+      "outstanding",
+      "brilliant",
+      "superb",
+      "incredible",
+      "extraordinary",
+      "spectacular",
+      "inspiring",
+      "uplifting",
+      "hopeful",
+      "confident",
+      "comfortable",
+      "peaceful",
+      "blissful",
+      "content",
+      "satisfied",
+      "fulfilled",
     ],
+
     sedih: [
       "sedih sekali",
       "kecewa dengan hasil",
@@ -31,20 +98,79 @@ export const useNaiveBayes = () => {
       "down banget mood",
       "patah hati",
       "lonely feeling",
-      "depression hits",
       "feeling blue",
       "heartbroken",
       "disappointed",
-      "melancholy",
       "sorrowful",
       "gloomy",
       "upset",
       "frustrated",
       "hopeless",
       "miserable",
-      "distressed",
       "devastated",
+      "kesepian",
+      "sepi",
+      "hancur hati",
+      "terpuruk",
+      "lemah",
+      "lelah jiwa",
+      "capek mental",
+      "putus asa",
+      "menyerah total",
+      "gagal lagi",
+      "kalah terus",
+      "kehilangan harapan",
+      "ditinggal pergi",
+      "diabaikan semua",
+      "dilupakan orang",
+      "sendirian terus",
+      "terisolasi",
+      "terbuang",
+      "kosong hati",
+      "hampa jiwa",
+      "baper banget",
+      "galau tingkat tinggi",
+      "sedih poll",
+      "nangis bombay",
+      "drop banget",
+      "bad mood parah",
+      "suram banget",
+      "murung terus",
+      "merana",
+      "duka mendalam",
+      "derita batin",
+      "menderita sekali",
+      "terluka dalam",
+      "sakit hati",
+      "perih rasanya",
+      "pilu banget",
+      "miris sekali",
+      "terpukul berat",
+      "terhantam keras",
+      "terbebani berat",
+      "tertekan jiwa",
+      "void inside",
+      "empty heart",
+      "hollow feeling",
+      "numb completely",
+      "lifeless",
+      "boring life",
+      "jenuh hidup",
+      "stuck nowhere",
+      "lost direction",
+      "confused life",
+      "hopeless future",
+      "meaningless day",
+      "broken inside",
+      "hurt deeply",
+      "pain inside",
+      "weak soul",
+      "fragile heart",
+      "helpless feeling",
+      "useless person",
+      "worthless life",
     ],
+
     marah: [
       "kesal banget",
       "marah besar",
@@ -54,22 +180,81 @@ export const useNaiveBayes = () => {
       "emosi naik",
       "furious feeling",
       "irritated so much",
-      "angry mode on",
       "pissed off",
       "outraged",
-      "fuming",
-      "livid",
-      "enraged",
-      "irate",
-      "incensed",
-      "heated",
-      "aggravated",
-      "exasperated",
-      "indignant",
+      "fuming mad",
+      "livid anger",
+      "enraged completely",
+      "heated argument",
+      "aggravated mood",
+      "indignant feeling",
+      "pusing banget",
+      "pusing berat",
+      "sakit kepala",
+      "mumet parah",
+      "pening terus",
+      "marah besar sekali",
+      "kesal besar",
+      "dongkol banget",
+      "sewot parah",
+      "jengkel tinggi",
+      "gondok berat",
+      "berang sekali",
+      "murka besar",
+      "gusar banget",
+      "sebel parah",
+      "bete banget",
+      "badmood parah",
+      "emosi memuncak",
+      "naik pitam",
+      "naik darah",
+      "kesel abis",
+      "sebel tingkat tinggi",
+      "bete parah banget",
+      "dongkol berat",
+      "jengkel poll",
+      "gregetan banget",
+      "pengen ngamuk",
+      "mau marah besar",
+      "siap meledak",
+      "hampir explode",
+      "udah limit",
+      "overwhelmed banget",
+      "frustrasi berat",
+      "kecewa marah",
+      "upset parah",
+      "disturbed banget",
+      "bothered sekali",
+      "agitated mood",
+      "restless banget",
+      "tense sekali",
+      "pressured tinggi",
+      "benci banget",
+      "muak sekali",
+      "jijik parah",
+      "anti banget",
+      "ogah total",
+      "males banget",
+      "explosive mood",
+      "boiling mad",
+      "burning anger",
+      "hot temper",
+      "rage mode",
+      "fury unleashed",
+      "wrath activated",
+      "angry explosion",
+      "mad completely",
+      "crazy mad",
+      "wild anger",
+      "brutal mood",
+      "violent feeling",
+      "aggressive mode",
+      "hostile attitude",
+      "cruel mood",
     ],
   };
 
-  // Stopwords bahasa Indonesia dan Inggris
+  // Stopwords yang lebih fokus
   const stopwords = new Set([
     "yang",
     "dan",
@@ -101,6 +286,14 @@ export const useNaiveBayes = () => {
     "mereka",
     "ini",
     "itu",
+    "nya",
+    "mu",
+    "ku",
+    "lah",
+    "kah",
+    "pun",
+    "hari",
+    "waktu",
     "the",
     "is",
     "at",
@@ -129,7 +322,6 @@ export const useNaiveBayes = () => {
     "may",
     "might",
     "must",
-    "shall",
     "of",
     "in",
     "for",
@@ -138,7 +330,6 @@ export const useNaiveBayes = () => {
     "about",
     "into",
     "through",
-    "during",
     "before",
     "after",
     "above",
@@ -150,9 +341,6 @@ export const useNaiveBayes = () => {
     "over",
     "under",
     "again",
-    "further",
-    "then",
-    "once",
     "here",
     "there",
     "when",
@@ -179,150 +367,248 @@ export const useNaiveBayes = () => {
     "than",
     "too",
     "very",
-    "s",
-    "t",
     "just",
     "now",
   ]);
 
-  // Preprocessing text
+  // Validasi input yang lebih ketat
+  const validateInput = (text) => {
+    if (!text || typeof text !== "string") {
+      return { isValid: false, reason: "Input harus berupa teks yang valid" };
+    }
+
+    const cleanText = text.trim();
+    if (cleanText.length < 2) {
+      return {
+        isValid: false,
+        reason: "Teks terlalu pendek (minimal 2 karakter)",
+      };
+    }
+
+    if (cleanText.length > 1000) {
+      return {
+        isValid: false,
+        reason: "Teks terlalu panjang (maksimal 1000 karakter)",
+      };
+    }
+
+    // Cek apakah hanya berisi karakter khusus atau angka
+    const hasLetters = /[a-zA-Z\u0080-\uFFFF]/.test(cleanText);
+    if (!hasLetters) {
+      return { isValid: false, reason: "Teks harus mengandung huruf" };
+    }
+
+    return { isValid: true };
+  };
+
+  // Preprocessing yang lebih baik
   const preprocessText = (text) => {
-    // Case folding
-    let processed = text.toLowerCase();
+    if (!text) return [];
 
-    // Remove punctuation and special characters
-    processed = processed.replace(/[^\w\s]/g, " ");
+    let processed = text.toLowerCase().trim();
 
-    // Tokenization
-    let tokens = processed.split(/\s+/).filter((token) => token.length > 0);
+    // Hapus karakter khusus tapi pertahankan spasi
+    processed = processed.replace(/[^\w\s\u0080-\uFFFF]/g, " ");
 
-    // Remove stopwords
-    tokens = tokens.filter((token) => !stopwords.has(token));
+    // Split dan filter
+    let tokens = processed
+      .split(/\s+/)
+      .filter((token) => token.length > 0)
+      .filter((token) => !stopwords.has(token))
+      .filter((token) => token.length >= 2); // Minimal 2 karakter
 
     return tokens;
   };
 
-  // Build vocabulary and calculate probabilities
-  const buildModel = () => {
+  // Build model dengan smoothing yang tepat
+  const buildModelWithDetails = () => {
     const vocabulary = new Set();
     const classWordCounts = {};
-    const classTotalCounts = {};
+    const classTotalWords = {};
     const classPriors = {};
 
     let totalDocuments = 0;
 
-    // Process training data
+    // Hitung total dokumen
+    Object.keys(trainingData).forEach((className) => {
+      totalDocuments += trainingData[className].length;
+    });
+
+    // Process setiap class
     Object.keys(trainingData).forEach((className) => {
       classWordCounts[className] = {};
-      classTotalCounts[className] = 0;
+      classTotalWords[className] = 0;
 
+      // Prior probability
+      classPriors[className] = trainingData[className].length / totalDocuments;
+
+      // Process setiap dokumen dalam class
       trainingData[className].forEach((text) => {
         const tokens = preprocessText(text);
-        totalDocuments++;
 
         tokens.forEach((token) => {
           vocabulary.add(token);
           classWordCounts[className][token] =
             (classWordCounts[className][token] || 0) + 1;
-          classTotalCounts[className]++;
+          classTotalWords[className]++;
         });
       });
-
-      // Calculate class priors
-      classPriors[className] = trainingData[className].length / totalDocuments;
     });
 
     return {
       vocabulary: Array.from(vocabulary),
       classWordCounts,
-      classTotalCounts,
+      classTotalWords,
       classPriors,
       vocabularySize: vocabulary.size,
     };
   };
 
-  // Classify text using Naive Bayes
-  const classifyText = (text) => {
-    const model = buildModel();
-    const tokens = preprocessText(text);
-    const scores = {};
+  // Klasifikasi dengan perhitungan yang benar
+  const classifyTextWithDetails = (text) => {
+    const validation = validateInput(text);
+    if (!validation.isValid) {
+      return {
+        error: true,
+        message: validation.reason,
+        mood: null,
+        confidence: 0,
+      };
+    }
 
+    const model = buildModelWithDetails();
+    const tokens = preprocessText(text);
+
+    if (tokens.length === 0) {
+      return {
+        error: true,
+        message: "Tidak ada kata yang dapat dianalisis setelah preprocessing",
+        mood: null,
+        confidence: 0,
+      };
+    }
+
+    const scores = {};
+    const details = {};
+
+    // Hitung score untuk setiap class
     Object.keys(trainingData).forEach((className) => {
-      // Start with class prior (log probability)
-      let logProbability = Math.log(model.classPriors[className]);
+      let logScore = Math.log(model.classPriors[className]);
+      const tokenDetails = [];
 
       tokens.forEach((token) => {
-        // Laplace smoothing
-        const tokenCount = model.classWordCounts[className][token] || 0;
+        const wordCount = model.classWordCounts[className][token] || 0;
+        // Laplace smoothing dengan alpha = 1
         const probability =
-          (tokenCount + 1) /
-          (model.classTotalCounts[className] + model.vocabularySize);
-        logProbability += Math.log(probability);
+          (wordCount + 1) /
+          (model.classTotalWords[className] + model.vocabularySize);
+        const logProb = Math.log(probability);
+
+        logScore += logProb;
+
+        tokenDetails.push({
+          word: token,
+          count: wordCount,
+          probability: probability,
+          logProbability: logProb,
+        });
       });
 
-      scores[className] = logProbability;
+      scores[className] = logScore;
+      details[className] = {
+        prior: model.classPriors[className],
+        logPrior: Math.log(model.classPriors[className]),
+        tokens: tokenDetails,
+        finalScore: logScore,
+      };
     });
 
-    // Find class with highest probability
-    const predictedClass = Object.keys(scores).reduce((a, b) =>
-      scores[a] > scores[b] ? a : b
-    );
-
-    // Convert log probabilities to normalized probabilities
+    // Konversi ke probabilitas normal (softmax)
     const maxScore = Math.max(...Object.values(scores));
     const expScores = {};
+
     Object.keys(scores).forEach((className) => {
       expScores[className] = Math.exp(scores[className] - maxScore);
     });
 
-    const sumExpScores = Object.values(expScores).reduce(
-      (sum, score) => sum + score,
-      0
-    );
-    const normalizedScores = {};
+    const sumExp = Object.values(expScores).reduce((sum, val) => sum + val, 0);
+    const probabilities = {};
+
     Object.keys(expScores).forEach((className) => {
-      normalizedScores[className] = expScores[className] / sumExpScores;
+      probabilities[className] = expScores[className] / sumExp;
     });
 
-    const confidence = normalizedScores[predictedClass];
+    // Prediksi class dengan score tertinggi
+    const predictedClass = Object.keys(scores).reduce((a, b) =>
+      scores[a] > scores[b] ? a : b
+    );
+
+    const confidence = Math.round(probabilities[predictedClass] * 100);
 
     return {
+      error: false,
       mood: predictedClass,
-      confidence: Math.round(confidence * 100),
-      probabilities: normalizedScores,
+      confidence: confidence,
+      probabilities: probabilities,
+      model: model,
+      details: details,
+      tokens: tokens,
+      rawScores: scores,
     };
   };
 
-  // Get mood suggestion
+  // Saran mood yang lebih personal
   const getMoodSuggestion = (mood, confidence) => {
     const suggestions = {
       bahagia: [
         "Terus pertahankan mood positif ini! 😊",
         "Bagikan kebahagiaan ini dengan orang lain!",
-        "Moment bahagia ini layak untuk diingat selamanya!",
         "Syukuri kebahagiaan yang kamu rasakan hari ini!",
+        "Jadikan hari ini sebagai motivasi untuk hari-hari berikutnya!",
+        "Semoga kebahagiaan ini terus berlanjut!",
       ],
       sedih: [
-        "Tidak apa-apa merasa sedih, ini adalah bagian dari hidup 💙",
-        "Cobalah berbicara dengan teman atau keluarga",
+        "Tidak apa-apa merasa sedih, ini bagian dari hidup 💙",
+        "Cobalah berbicara dengan teman atau keluarga terdekat",
         "Lakukan aktivitas yang biasanya membuatmu senang",
         "Ingat bahwa perasaan ini akan berlalu",
+        "Luangkan waktu untuk merawat diri sendiri",
       ],
       marah: [
         "Tarik napas dalam-dalam dan tenangkan diri 🧘‍♀️",
         "Cobalah untuk memahami akar dari kemarahan ini",
-        "Ekspresikan perasaanmu dengan cara yang sehat",
         "Mungkin perlu waktu untuk merenung sejenak",
+        "Olahraga ringan bisa membantu melepaskan emosi negatif",
+        "Bicarakan masalahmu dengan orang yang dipercaya",
       ],
     };
 
-    const moodSuggestions = suggestions[mood] || [];
+    const moodSuggestions = suggestions[mood] || [
+      "Tetap jaga kesehatan mental dan emosionalmu!",
+    ];
     return moodSuggestions[Math.floor(Math.random() * moodSuggestions.length)];
   };
 
+  // Fungsi untuk debugging
+  const debugClassification = (text) => {
+    const result = classifyTextWithDetails(text);
+    console.log("=== DEBUG CLASSIFICATION ===");
+    console.log("Input:", text);
+    console.log("Tokens:", result.tokens);
+    console.log("Raw Scores:", result.rawScores);
+    console.log("Probabilities:", result.probabilities);
+    console.log("Predicted:", result.mood);
+    console.log("Confidence:", result.confidence);
+    return result;
+  };
+
   return {
-    classifyText,
+    classifyTextWithDetails,
     getMoodSuggestion,
     preprocessText,
+    validateInput,
+    buildModelWithDetails,
+    trainingData,
+    debugClassification,
   };
 };
